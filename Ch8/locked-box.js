@@ -15,6 +15,11 @@ var box = {
 // Takes a function value as an argument, unlocks the box, runs the function,
 // and then locks the box again before returning (regardless of exceptions).
 var withBoxUnlocked = function(body) {
+  var locked = box.locked;
+  if(!locked) {
+    return body();
+  }
+
   box.unlock();
   try {
     body();
