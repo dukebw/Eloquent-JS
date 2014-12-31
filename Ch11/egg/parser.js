@@ -2,7 +2,7 @@
 // Expression -> variable, number, string or application.
 // Takes string as input. 
 // Returns expression data structure for start of string and leftover string.
-exports.parse = function(program) {
+parse = function(program) {
   var result = parseExpression(program);
   if(skipSpace(result.rest).length > 0) {
     throw new SyntaxError("Unexpected text after program");
@@ -14,16 +14,16 @@ var parseExpression = function(program) {
   program = skipSpace(program);
   var match, expr;
   // Strings
-  if((match = /^"([^"]*)"/.exec(program))) {
+  if(match = /^"([^"]*)"/.exec(program)) {
     expr = { type: "value", value: match[1] };
   }
   // Numbers
-  else if((match = /^\d+\b/.exec(program))) {
+  else if(match = /^\d+\b/.exec(program)) {
     expr = { type: "value", value: Number(match[0]) };
   }
   // Words
-  else if((match = /^[^\s(),"]+/.exec(program))) {
-    expr = { type: "word", value: match[0] };
+  else if(match = /^[^\s(),"]+/.exec(program)) {
+    expr = { type: "word", name: match[0] };
   }
   else {
     throw new SyntaxError("Unexpected syntax: " + program);
@@ -60,3 +60,5 @@ var parseApply = function(expr, program) {
   }
   return parseApply(expr, program.slice(1));
 };
+
+module.exports = parse;
