@@ -65,6 +65,9 @@ specialForms.define = function(args, env) {
   if(args.length !== 2 || args[0].type !== "word") {
     throw new SyntaxError("Bad use of define");
   }
+  if(Object.prototype.hasOwnProperty.call(env, args[0].name)) {
+    throw new ReferenceError("Re-defining variable " + args[0].name + ".");
+  }
   var value = evaluate(args[1], env);
   env[args[0].name] = value;
   return value;
@@ -93,6 +96,32 @@ specialForms.fun = function(args, env) {
     }
     return evaluate(body, localEnv);
   };
+};
+
+// Gives a variable a new value. If the variable is not defined, throws
+// a ReferenceError.
+specialForms.set = function(args, env) {
+  var setInEnv = function(name, value, env) {
+    if(!Object.prototype.hasOwnProperty.call(env, name)) {
+      var outerEnv = Object.getPrototypeOf(env);
+      if(outerEnv === null) {
+        throw new ReferenceError("No variable " + name + ".");
+      }
+      else {
+        return setInEnv(name, value, outerEnv);
+      }
+    }
+    env[name] = value;
+    return value;
+  };
+
+  if(args.length !== 2 || args[0].type !== "word") {
+    throw new SyntaxError("Bad use of define");
+  }
+
+  var value = evaluate(args[1], env);
+  var name = args[0].name;
+  return setInEnv(name, value, env);
 };
 
 module.exports = evaluate;

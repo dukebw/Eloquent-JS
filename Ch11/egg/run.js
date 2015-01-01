@@ -6,6 +6,16 @@ var topEnv = Object.create(null);
 topEnv["true"] = true;
 topEnv["false"] = false;
 
+topEnv.array = function() {
+  return Array.prototype.slice.call(arguments, 0);
+};
+topEnv.length = function(array) {
+  return array.length;
+};
+topEnv.element = function(array, i) {
+  return array[i];
+};
+
 // Define operators in a loop to keep code short
 ["+", "-", "*", "/", "==", "<", ">"].forEach(function(op) {
   topEnv[op] = new Function("a, b", "return a " + op + " b;");

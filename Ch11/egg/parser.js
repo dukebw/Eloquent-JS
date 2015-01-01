@@ -32,12 +32,18 @@ var parseExpression = function(program) {
 };
 
 var skipSpace = function(string) {
-  var first = string.search(/\S/);
-  if(first === -1) {
-    return "";
-  }
-  return string.slice(first);
+  var skippable = string.match(/^(\s|#.*)*/);
+  return string.slice(skippable[0].length);
 };
+
+// My solution
+// var skipSpace = function(string) {
+//   var first = string.search(/\S/)
+//   if(first === -1) {
+//     return "";
+//   }
+//   return string.slice(first).replace(/#(.*)?(\n|$)/g, "");
+// };
 
 // Checks whether expr is application. If so, parses arguments.
 var parseApply = function(expr, program) {
@@ -54,7 +60,7 @@ var parseApply = function(expr, program) {
     if(program[0] === ",") {
       program = skipSpace(program.slice(1));
     }
-    else if(program[0] != ")") {
+    else if(program[0] !== ")") {
       throw new SyntaxError("Expected ',' or ')'");
     }
   }
