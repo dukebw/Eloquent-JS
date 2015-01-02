@@ -1,0 +1,71 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Build table</title>
+  </head>
+  <body>
+    <h1>Build table</h1>
+    <style>
+      /* Defines a cleaner look for tables */
+      table { border-collapse: collapse; }
+      td, th { border: 1px solid black; padding: 3px 8px; }
+      th { text-align: left; }
+    </style>
+    <script>
+      var MOUNTAINS = [
+        {name: "Kilimanjaro", height: 5895, country: "Tanzania"},
+        {name: "Everest", height: 8848, country: "Nepal"},
+        {name: "Mount Fuji", height: 3776, country: "Japan"},
+        {name: "Mont Blanc", height: 4808, country: "Italy/France"},
+        {name: "Vaalserberg", height: 323, country: "Netherlands"},
+        {name: "Denali", height: 6168, country: "United States"},
+        {name: "Popocatepetl", height: 5465, country: "Mexico"}
+      ];
+
+      var isNumeric = function(num) {
+        return !isNaN(num);
+      };
+
+      var alignNum = function(node) {
+        node.style.textAlign = "right";
+      };
+
+      var buildTable = function(data) {
+        // get the reference for the body
+        var table = document.createElement("table");
+        var tableBody = document.createElement("tbody");
+
+        var names = Object.getOwnPropertyNames(data[0]);
+
+        var newHeader;
+        var headers = document.createElement("tr");
+        for(var i = 0; i < names.length; ++i) {
+          newHeader = document.createElement("th");
+          newHeader.appendChild(document.createTextNode(names[i]));
+          headers.appendChild(newHeader);
+        }
+        tableBody.appendChild(headers);
+
+        // creating all cells
+        var row, newCell;
+        for(var i = 0; i < data.length; ++i) {
+          row = document.createElement("tr");
+          for(var j = 0; j < names.length; ++j) {
+            newCell = document.createElement("td");
+            newCell.appendChild(document.createTextNode(data[i][names[j]]));
+            row.appendChild(newCell);
+            if(isNumeric(newCell.childNodes[0].textContent)) {
+              alignNum(newCell);
+            }
+          }
+          tableBody.appendChild(row);
+        }
+
+        table.appendChild(tableBody);
+        return table;
+      };
+
+      document.body.appendChild(buildTable(MOUNTAINS));
+    </script>
+  </body>
+</html>
