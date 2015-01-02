@@ -52,9 +52,9 @@
           row = document.createElement("tr");
           for(var j = 0; j < names.length; ++j) {
             newCell = document.createElement("td");
-            newCell.appendChild(document.createTextNode(data[i][names[j]]));
+            newCell.textContent = data[i][names[j]];
             row.appendChild(newCell);
-            if(isNumeric(newCell.childNodes[0].textContent)) {
+            if(isNumeric(newCell.textContent)) {
               alignNum(newCell);
             }
           }
