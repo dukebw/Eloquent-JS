@@ -12,38 +12,43 @@ var findButton = function(text) {
 
 var asTabs = function(node) {
   if(node.hasChildNodes) {
-    var children = node.childNodes;
-    var button;
+    var children = node.childNodes, tabs = [], button;
 
-    var showTab = function(event) {
-      var divs = document.getElementsByTagName("div");
-      for(var i = 0; i < divs.length; ++i) {
-        var tabname = divs[i].getAttribute("data-tabname");
-        if(tabname) {
-          if(tabname === event.target.textContent) {
-            divs[i].style.display = ""; 
-            findButton(tabname).style.color = "red";
-          }
-          else {
-            divs[i].style.display = "none";
-            findButton(tabname).style.color = "black";
-          }
-        }
-      }
-    };
-
-    for(var i = 0; i < children.length; ++i) {
-      if(children[i].style) {
-        children[i].style.display = "none";
-        button = document.createElement("button");
-        button.textContent = children[i].getAttribute("data-tabname");
-        button.style.left = node.style.left;
-        button.style.top = node.style.top;
-        document.body.appendChild(button);
+    for(var i = 0; i < node.childNodes.length; ++i) {
+      var child = node.childNodes[i];
+      if(child.nodeType === document.ELEMENT_NODE) {
+        tabs.push(child);
       }
     }
 
-    addEventListener("click", showTab);
+    var tabList = document.createElement("div");
+    tabs.forEach(function(tab, i) {
+      var button = document.createElement("button");
+      button.textContent = tab.getAttribute("data-tabname");
+      button.addEventListener("click", function() { selectTab(i); });
+      tabList.appendChild(button);
+    });
+    node.insertBefore(tabList, node.firstChild);
+
+    var selectTab = function(n) {
+      tabs.forEach(function(tab, i) {
+        if(i === n) {
+          tab.style.display = "";
+        }
+        else {
+          tab.style.display = "none";
+        }
+      });
+      for(i = 0; i < tabList.childNodes.length; ++i) {
+        if(i === n) {
+          tabList.childNodes[i].style.background = "violet";
+        }
+        else {
+          tabList.childNodes[i].style.background = "";
+        }
+      }
+    };
+    selectTab(0);
   }
   else {
     // TODO(brendan): log error
