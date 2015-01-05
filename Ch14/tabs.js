@@ -21,7 +21,7 @@ var asTabs = function(node) {
         var tabname = divs[i].getAttribute("data-tabname");
         if(tabname) {
           if(tabname === event.target.textContent) {
-            divs[i].style.display = "block"; 
+            divs[i].style.display = ""; 
             findButton(tabname).style.color = "red";
           }
           else {
