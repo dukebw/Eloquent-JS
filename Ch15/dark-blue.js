@@ -12,6 +12,8 @@ var simpleLevelPlan = [
   "                      "
 ];
 
+var scale = 20;
+
 var Vector = function(x, y) {
   this.x = x;
   this.y = y;
@@ -24,6 +26,41 @@ Vector.prototype.plus = function(other) {
 Vector.prototype.times = function(factor) {
   return new Vector(this.x * factor, this.y * factor);
 };
+
+var Player = function(pos) {
+  this.pos = pos.plus(new Vector(0, -0.5));
+  this.size = new Vector(0.8, 1.5);
+  this.speed = new Vector(0, 0);
+};
+
+Player.prototype.type = "player";
+
+// NOTE(brendan): Coin constructor
+var Coin = function(pos) {
+  this.basePos = this.pos = pos.plus(new Vector(0.2, 0.1));
+  this.size = new Vector(0.6, 0.6);
+  this.wobble = Math.random() * Math.PI * 2;
+};
+
+Coin.prototype.type = "coin";
+
+// NOTE(brendan): Lava constructor
+var Lava = function(pos, ch) {
+  this.pos = pos;
+  this.size = new Vector(1, 1);
+  if(ch === "=") {
+    this.speed = new Vector(2, 0);
+  }
+  else if(ch === "|") {
+    this.speed = new Vector(0, 2);
+  }
+  else if(ch === "v") {
+    this.speed = new Vector(0, 3);
+    this.repeatPos = pos;
+  }
+};
+
+Lava.prototype.type = "lava";
 
 // NOTE(brendan): Used by Level object to associate characters with
 // constructor functions.
@@ -46,9 +83,75 @@ var DOMDisplay = function(parent, level) {
   this.wrap = parent.appendChild(elt("div", "game"));
   this.level = level;
 
-  this.wrap.appendChild(this.background());
+  this.wrap.appendChild(this.drawBackground());
   this.actorLayer = null;
   this.drawFrame();
+};
+
+DOMDisplay.prototype.drawBackground = function() {
+  var table = elt("table", "background");
+  table.style.width = this.level.width * scale + "px";
+  this.level.grid.forEach(function(row) {
+    var rowElt = table.appendChild(elt("tr"));
+    rowElt.style.height = scale + "px";
+    row.forEach(function(type) {
+      rowElt.appendChild(elt("td", type));
+    });
+  });
+  return table;
+};
+
+DOMDisplay.prototype.drawActors = function() {
+  var wrap = elt("div");
+  this.level.actors.forEach(function(actor) {
+    var rect = wrap.appendChild(elt("div", "actor " + actor.type));
+    rect.style.width = actor.size.x * scale + "px";
+    rect.style.height = actor.size.y * scale + "px";
+    rect.style.left = actor.pos.x * scale + "px";
+    rect.style.top = actor.pos.y * scale + "px";
+  });
+  return wrap;
+};
+
+DOMDisplay.prototype.drawFrame = function() {
+  if(this.actorLayer) {
+    this.wrap.removeChild(this.actorLayer);
+  }
+  this.actorLayer = this.wrap.appendChild(this.drawActors());
+  this.wrap.className = "game " + (this.level.status || "");
+  this.scrollPlayerIntoView();
+};
+
+// NOTE(brendan): Find player's position and update wrapping element's scroll
+// position.
+DOMDisplay.prototype.scrollPlayerIntoView = function() {
+  var width = this.wrap.clientWidth;
+  var height = this.wrap.clientHeight;
+  var margin = width / 3;
+
+  // NOTE(brendan): the viewport
+  var left = this.wrap.scrollLeft, right = left + width;
+  var top = this.wrap.scrollTop, bottom = top + height;
+
+  var player = this.level.player;
+  var center = player.pos.plus(player.size.times(0.5)).times(scale);
+
+  if(center.x < left + margin) {
+    this.wrap.scrollLeft = center.x - margin;
+  }
+  else if(center.x > right - margin) {
+    this.wrap.scrollLeft = center.x + margin - width;
+  }
+  if(center.y < top + margin) {
+    this.wrap.scrollTop = center.y - margin;
+  }
+  else if(center.y > bottom - margin) {
+    this.wrap.scrollTop = center.y + margin - height;
+  }
+};
+
+DOMDisplay.prototype.clear = function() {
+  this.wrap.parentNode.removeChild(this.wrap); 
 };
 
 // NOTE(brendan): Level constructor
@@ -87,39 +190,5 @@ Level.prototype.isFinished = function() {
   return this.status !== null && this.finishDelay < 0;
 };
 
-var Player = function(pos) {
-  this.pos = pos.plus(new Vector(0, -0.5));
-  this.size = new Vector(0.8, 1.5);
-  this.speed = new Vector(0, 0);
-};
-
-Player.prototype.type = "player";
-
-// NOTE(brendan): Lava constructor
-var Lava = function(pos, ch) {
-  this.pos = pos;
-  this.size = new Vector(1, 1);
-  if(ch === "=") {
-    this.speed = new Vector(2, 0);
-  }
-  else if(ch === "|") {
-    this.speed = new Vector(0, 2);
-  }
-  else if(ch === "v") {
-    this.speed = new Vector(0, 3);
-    this.repeatPos = pos;
-  }
-};
-
-Lava.prototype.type = "lava";
-
-// NOTE(brendan): Coin constructor
-var Coin = function(pos) {
-  this.basePos = this.pos = pos.plus(new Vector(0.2, 0.1));
-  this.size = new Vector(0.6, 0.6);
-  this.wobble = Math.random() * Math.PI * 2;
-};
-
-Coin.prototype.type = "coin";
-
 var simpleLevel = new Level(simpleLevelPlan);
+var display = new DOMDisplay(document.body, simpleLevel);
