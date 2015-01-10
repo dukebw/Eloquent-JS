@@ -13,6 +13,26 @@ var simpleLevelPlan = [
 ];
 
 var scale = 20;
+var maxStep = 0.05;
+var wobbleSpeed = 8, wobbleDist = 0.07;
+var playerXSpeed = 7;
+var gravity = 30;
+var jumpSpeed = 17;
+var arrowCodes = { 37: "left", 38: "up", 39: "right"};
+
+var trackKeys = function(codes) {
+  var pressed = Object.create(null);
+  var handler = function(event) {
+    if(codes.hasOwnProperty(event.keyCode)) {
+      var down = (event.type === "keydown");
+      pressed[codes[event.keyCode]] = down;
+      event.preventDefault();
+    }
+  };
+  addEventListener("keydown", handler);
+  addEventListener("keyup", handler);
+  return pressed;
+};
 
 var Vector = function(x, y) {
   this.x = x;
@@ -35,6 +55,61 @@ var Player = function(pos) {
 
 Player.prototype.type = "player";
 
+Player.prototype.moveX = function(step, level, keys) {
+  this.speed.x = 0;
+  if(keys.left) {
+    this.speed.x -= playerXSpeed;
+  }
+  if(keys.right) {
+    this.speed.x += playerXSpeed;
+  }
+
+  var motion = new Vetor(this.speed.x * step, 0);
+  var newPos = this.pos.plus(motion);
+  var obstacle = level.obstacleAt(newPos, this.size);
+  if(obstacle) {
+    level.playerTouched(obstacle);
+  }
+  else {
+    this.pos = newPos;
+  }
+};
+
+Player.prototype.moveY = function(step, level, keys) {
+  this.speed.y += step * gravity;
+  var motion = new Vector(0, this.speed.y * step);
+  var newPos = this.pos.plus(motion);
+  var obstacle = level.obstacleAt(newPos, this.size);
+  if(obstacle) {
+    level.playerTouched(obstacle);
+    if(keys.up && this.speed.y > 0) {
+      this.speed.y = -jumpSpeed;
+    }
+    else {
+      this.speed.y = 0;
+    }
+  }
+  else {
+    this.pos = newPos;
+  }
+};
+
+Player.prototype.act = function(step, level, keys) {
+  this.moveX(step, level, keys);
+  this.moveY(step, level, keys);
+
+  var otherActor = level.actorAt(this);
+  if(otherActor) {
+    level.playerTouched(otherActor.type, otherActor);
+  }
+
+  // Losing animation
+  if(level.status == "lost") {
+    this.pos.y += step;
+    this.size.y -= step;
+  }
+};
+
 // NOTE(brendan): Coin constructor
 var Coin = function(pos) {
   this.basePos = this.pos = pos.plus(new Vector(0.2, 0.1));
@@ -43,6 +118,12 @@ var Coin = function(pos) {
 };
 
 Coin.prototype.type = "coin";
+
+Coin.prototype.act = function(act) {
+  this.wobble += step * wobbleSpeed;
+  var wobblePos = Math.sin(this.wobble) * wobbleDist;
+  this.pos = this.basePos.plus(new Vector(0, wobblePos));
+};
 
 // NOTE(brendan): Lava constructor
 var Lava = function(pos, ch) {
@@ -61,6 +142,19 @@ var Lava = function(pos, ch) {
 };
 
 Lava.prototype.type = "lava";
+
+Lava.prototype.act = function(step, level) {
+  var newPos = this.pos.plus(this.speed.times(step));
+  if(!level.obstacleAt(newPos, this.size)) {
+    this.pos = newPos;
+  }
+  else if(this.repeatPos) {
+    this.pos = this.repeatPos
+  }
+  else {
+    this.speed = this.speed.times(-1);
+  }
+};
 
 // NOTE(brendan): Used by Level object to associate characters with
 // constructor functions.
@@ -225,6 +319,38 @@ Level.prototype.actorAt = function(actor) {
        actor.pos.y + actor.size.y > other.pos.y &&
        actor.pos.y < other.pos.y + other.size.y) {
       return other;
+    }
+  }
+};
+
+Level.prototype.animate = function(step, keys) {
+  if(this.status !== null) {
+    this.finishDelay -= step;
+  }
+
+  while(step > 0) {
+    var thisStep = Math.min(step, maxStep);
+    this.actors.forEach(function(actor) {
+      actor.act(thisStep, this, keys);
+    }, this);
+    step -= thisStep;
+  }
+};
+
+Level.prototype.playerTouched = function(type, actor) {
+  if(type === "lava" && this.status === null) {
+    this.status = "lost";
+    this.finishDelay = 1;
+  }
+  else if(type === "coin") {
+    this.actors = this.actors.filter(function(other) {
+      return other !== actor;
+    });
+    if(!this.actors.some(function(actor) {
+      return actor.type === "coin";
+    })) {
+      this.status = "won";
+      this.finishDelay = 1;
     }
   }
 };
