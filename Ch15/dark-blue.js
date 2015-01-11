@@ -15,7 +15,7 @@ var simpleLevelPlan = [
 ];
 
 // NOTE(brendan): Level constructor
-var Level = function(plan) {
+function Level(plan) {
   this.width = plan[0].length;
   this.height = plan.length;
   this.grid = [];
@@ -71,7 +71,7 @@ var actorChars = {
   "=": Lava, "|": Lava, "v": Lava
 };
 
-var Player = function(pos) {
+function Player(pos) {
   this.pos = pos.plus(new Vector(0, -0.5));
   this.size = new Vector(0.8, 1.5);
   this.speed = new Vector(0, 0);
@@ -80,7 +80,7 @@ var Player = function(pos) {
 Player.prototype.type = "player";
 
 // NOTE(brendan): Lava constructor
-var Lava = function(pos, ch) {
+function Lava(pos, ch) {
   this.pos = pos;
   this.size = new Vector(1, 1);
   if(ch == "=") {
@@ -98,7 +98,7 @@ var Lava = function(pos, ch) {
 Lava.prototype.type = "lava";
 
 // NOTE(brendan): Coin constructor
-var Coin = function(pos) {
+function Coin(pos) {
   this.basePos = this.pos = pos.plus(new Vector(0.2, 0.1));
   this.size = new Vector(0.6, 0.6);
   this.wobble = Math.random() * Math.PI * 2;
@@ -110,7 +110,7 @@ var simpleLevel = new Level(simpleLevelPlan);
 // var display = new DOMDisplay(document.body, simpleLevel);
 
 // NOTE(brendan): creates an element and gives it a class
-var elt = function(name, className) {
+function elt(name, className) {
   var elt = document.createElement(name);
   if(className) {
     elt.className = className;
@@ -118,7 +118,7 @@ var elt = function(name, className) {
   return elt;
 };
 
-var DOMDisplay = function(parent, level) {
+function DOMDisplay(parent, level) {
   this.wrap = parent.appendChild(elt("div", "game"));
   this.level = level;
 
@@ -351,7 +351,7 @@ Level.prototype.playerTouched = function(type, actor) {
 
 var arrowCodes = { 37: "left", 38: "up", 39: "right"};
 
-var trackKeys = function(codes) {
+function trackKeys(codes) {
   var pressed = Object.create(null);
   var handler = function(event) {
     if(codes.hasOwnProperty(event.keyCode)) {
@@ -367,7 +367,7 @@ var trackKeys = function(codes) {
 
 // NOTE(brendan): wrapper function for requestAnimationFrame.
 // Input: time difference. Draws a single frame.
-var runAnimation = function(frameFunc) {
+function runAnimation(frameFunc) {
   var lastTime = null;
   var frame = function(time) {
     var stop = false;
@@ -388,7 +388,7 @@ var arrows = trackKeys(arrowCodes);
 // NOTE(brendan): Input: a Level object, a constructor for a display, and,
 // optionally, a function.
 // Displays the level in document.body and lets the user play it.
-var runLevel = function(level, Display, andThen) {
+function runLevel(level, Display, andThen) {
   var display = new Display(document.body, level);
   runAnimation(function(step) {
     level.animate(step, arrows);
@@ -405,7 +405,7 @@ var runLevel = function(level, Display, andThen) {
 
 // NOTE(brendan): takes an array of level plans and a display constructor.
 // Creates game: a sequence of levels.
-var runGame = function(plans, Display) {
+function runGame(plans, Display) {
   var startLevel = function(n) {
     runLevel(new Level(plans[n]), Display, function(status) {
       if(status == "lost") {
