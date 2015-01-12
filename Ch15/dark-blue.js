@@ -406,20 +406,27 @@ function runLevel(level, Display, andThen) {
 // NOTE(brendan): takes an array of level plans and a display constructor.
 // Creates game: a sequence of levels.
 function runGame(plans, Display) {
-  var startLevel = function(n) {
+  var startLevel = function(n, livesRemaining) {
     runLevel(new Level(plans[n]), Display, function(status) {
       if(status == "lost") {
-        startLevel(n);
+        var newLivesRemaining = livesRemaining - 1;
+        if(newLivesRemaining != 0) {
+          startLevel(n, newLivesRemaining);
+        }
+        else {
+          startLevel(0, 3);
+        }
       }
       else if(n < plans.length - 1) {
-        startLevel(n + 1);
+        startLevel(n + 1, livesRemaining);
       }
       else {
         console.log("You win!");
       }
     });
   };
-  startLevel(0);
+  // NOTE(brendan): Start with 3 lives.
+  startLevel(0, 3);
 };
 
 // runGame(GAME_LEVELS, DOMDisplay);
