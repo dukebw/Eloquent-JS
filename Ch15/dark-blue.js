@@ -44,10 +44,10 @@ function Level(plan) {
     return actor.type == "player";
   })[0];
   this.status = this.finishDelay = null;
-};
+}
 
 Level.prototype.isFinished = function() {
-  return this.status != null && this.finishDelay < 0;
+  return this.status !== null && this.finishDelay < 0;
 };
 
 var Vector = function(x, y) {
@@ -75,7 +75,7 @@ function Player(pos) {
   this.pos = pos.plus(new Vector(0, -0.5));
   this.size = new Vector(0.8, 1.5);
   this.speed = new Vector(0, 0);
-};
+}
 
 Player.prototype.type = "player";
 
@@ -93,7 +93,7 @@ function Lava(pos, ch) {
     this.speed = new Vector(0, 3);
     this.repeatPos = pos;
   }
-};
+}
 
 Lava.prototype.type = "lava";
 
@@ -102,7 +102,7 @@ function Coin(pos) {
   this.basePos = this.pos = pos.plus(new Vector(0.2, 0.1));
   this.size = new Vector(0.6, 0.6);
   this.wobble = Math.random() * Math.PI * 2;
-};
+}
 
 Coin.prototype.type = "coin";
 
@@ -116,7 +116,7 @@ function elt(name, className) {
     elt.className = className;
   }
   return elt;
-};
+}
 
 function DOMDisplay(parent, level) {
   this.wrap = parent.appendChild(elt("div", "game"));
@@ -125,7 +125,7 @@ function DOMDisplay(parent, level) {
   this.wrap.appendChild(this.drawBackground());
   this.actorLayer = null;
   this.drawFrame();
-};
+}
 
 var scale = 20;
 
@@ -237,7 +237,7 @@ Level.prototype.actorAt = function(actor) {
 var maxStep = 0.05;
 
 Level.prototype.animate = function(step, keys) {
-  if(this.status != null) {
+  if(this.status !== null) {
     this.finishDelay -= step;
   }
 
@@ -256,7 +256,7 @@ Lava.prototype.act = function(step, level) {
     this.pos = newPos;
   }
   else if(this.repeatPos) {
-    this.pos = this.repeatPos
+    this.pos = this.repeatPos;
   }
   else {
     this.speed = this.speed.times(-1);
@@ -332,7 +332,7 @@ Player.prototype.act = function(step, level, keys) {
 };
 
 Level.prototype.playerTouched = function(type, actor) {
-  if(type == "lava" && this.status == null) {
+  if(type == "lava" && this.status === null) {
     this.status = "lost";
     this.finishDelay = 1;
   }
@@ -363,7 +363,7 @@ function trackKeys(codes) {
   addEventListener("keydown", handler);
   addEventListener("keyup", handler);
   return pressed;
-};
+}
 
 // NOTE(brendan): wrapper function for requestAnimationFrame.
 // Input: time difference. Draws a single frame.
@@ -371,7 +371,7 @@ function runAnimation(frameFunc) {
   var lastTime = null;
   var frame = function(time) {
     var stop = false;
-    if(lastTime != null) {
+    if(lastTime !== null) {
       var timeStep = Math.min(time - lastTime, 100) / 1000;
       stop = frameFunc(timeStep) === false;
     }
@@ -381,9 +381,22 @@ function runAnimation(frameFunc) {
     }
   };
   requestAnimationFrame(frame);
-};
+}
 
 var arrows = trackKeys(arrowCodes);
+
+var pausedGame = false;
+
+addEventListener("keydown", function(event) {
+  if(event.keyCode === 27) {
+    if(pausedGame === false) {
+      pausedGame = true;
+    }
+    else {
+      pausedGame = false;
+    }
+  }
+});
 
 // NOTE(brendan): Input: a Level object, a constructor for a display, and,
 // optionally, a function.
@@ -400,8 +413,11 @@ function runLevel(level, Display, andThen) {
       }
       return false;
     }
+    if(pausedGame) {
+      return false;
+    }
   });
-};
+}
 
 // NOTE(brendan): takes an array of level plans and a display constructor.
 // Creates game: a sequence of levels.
@@ -410,7 +426,7 @@ function runGame(plans, Display) {
     runLevel(new Level(plans[n]), Display, function(status) {
       if(status == "lost") {
         var newLivesRemaining = livesRemaining - 1;
-        if(newLivesRemaining != 0) {
+        if(newLivesRemaining > 0) {
           startLevel(n, newLivesRemaining);
         }
         else {
